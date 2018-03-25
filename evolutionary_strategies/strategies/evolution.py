@@ -10,27 +10,41 @@ import torch
 
 class EvolutionModule:
 
-    def __init__(self, weights, reward_func, population_size=50, sigma=0.1, learning_rate=0.001, decay=1.0, threadcount=4):
+    def __init__(
+        self, 
+        weights, 
+        reward_func,
+        population_size=50,
+        sigma=0.1,
+        learning_rate=0.001,
+        decay=1.0,
+        threadcount=4,
+        render_test=False,
+        cuda=False
+    ):
         np.random.seed(0)
         self.weights = weights
         self.reward_function = reward_func
         self.POPULATION_SIZE = population_size
         self.SIGMA = sigma
         self.LEARNING_RATE = learning_rate
+        self.cuda = cuda
         self.decay = decay
         self.pool = ThreadPool(threadcount)
+        self.render_test = render_test
 
 
     def jitter_weights(self, weights, population=[], no_jitter=False):
         new_weights = []
         for i, param in enumerate(weights):
-            if not no_jitter:
-                jittered = self.SIGMA * population[i]
-                new_weights.append(param.data + torch.from_numpy(jittered).float())
-            else:
+            if no_jitter:
                 new_weights.append(param.data)
+            else:
+                jittered = torch.from_numpy(self.SIGMA * population[i]).float()
+                if self.cuda:
+                    jittered = jittered.cuda()
+                new_weights.append(param.data + jittered)
         return new_weights
-
 
 
     def run(self, iterations, print_step=10):
@@ -52,13 +66,16 @@ class EvolutionModule:
 
             for index, param in enumerate(self.weights):
                 A = np.array([p[index] for p in population])
-                param.data = param.data + (self.LEARNING_RATE / (len(population) * self.SIGMA) * torch.from_numpy(np.dot(A.T, normalized_rewards).T).float())
+                rewards_pop = torch.from_numpy(np.dot(A.T, normalized_rewards).T).float()
+                if self.cuda:
+                    rewards_pop = rewards_pop.cuda()
+                param.data = param.data + (self.LEARNING_RATE / (self.POPULATION_SIZE * self.SIGMA) * rewards_pop)
 
             self.LEARNING_RATE *= self.decay
 
             if (iteration+1) % print_step == 0:
                 print('iter %d. reward: %f' % (iteration+1, self.reward_function(
-                    self.jitter_weights(copy.deepcopy(self.weights), no_jitter=True), render=True)
+                    self.jitter_weights(copy.deepcopy(self.weights), no_jitter=True), render=self.render_test)
                     )
                 )
 

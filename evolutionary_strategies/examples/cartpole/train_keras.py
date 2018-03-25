@@ -37,6 +37,9 @@ def get_reward(weights):
 
     return total_reward
 
-es = EvolutionStrategy(model.get_weights(), get_reward, population_size=100, sigma=0.1, learning_rate=0.001)
+es = EvolutionStrategy(
+    model.get_weights(), get_reward, population_size=100, 
+    sigma=0.1, learning_rate=0.001, render_test=False
+)
 es.run(300)
 model.save('cartpole.h5')

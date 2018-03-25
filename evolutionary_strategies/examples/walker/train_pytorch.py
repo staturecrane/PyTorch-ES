@@ -1,15 +1,18 @@
+import argparse
 from collections import deque
 import copy
 from functools import partial
 import gc
 import logging
 from multiprocessing.pool import ThreadPool
+import os
 import pickle
 import random
 import sys
 
 # from evostra import EvolutionStrategy
-from evolution import strategies
+from evolutionary_strategies.strategies.evolution import EvolutionModule
+from evolutionary_strategies.utils.helpers import weights_init
 import gym
 from gym import logger as gym_logger
 import numpy as np
@@ -19,17 +22,27 @@ import torch.nn as nn
 
 gym_logger.setLevel(logging.CRITICAL)
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-w', '--weights_path', type=str, required=True, help='Path to save final weights')
+parser.add_argument('-c', '--cuda', action='store_true', help='Whether or not to use CUDA')
+parser.set_defaults(cuda=False)
+
+args = parser.parse_args()
+
+cuda = args.cuda and torch.cuda.is_available()
+
 # add the model on top of the convolutional base
 model = nn.Sequential(
     nn.Linear(24, 100),
-    nn.ReLU(True),
-    nn.Linear(100, 100),
     nn.ReLU(True),
     nn.Linear(100, 4),
     nn.Tanh()
 )
 
-pool = ThreadPool(100)
+model.apply(weights_init)
+
+if cuda:
+    model = model.cuda()
 
 def get_reward(weights, model, render=False):
 
@@ -47,8 +60,10 @@ def get_reward(weights, model, render=False):
     while not done:
         if render:
             env.render()
-        batch = ob[np.newaxis,...]
-        prediction = cloned_model(Variable(torch.from_numpy(batch).float(), volatile=True))
+        batch = torch.from_numpy(ob[np.newaxis,...]).float()
+        if cuda:
+            batch = batch.cuda()
+        prediction = cloned_model(Variable(batch, volatile=True))
         action = prediction.data[0]
         ob, reward, done, _ = env.step(action)
 
@@ -60,9 +75,13 @@ def get_reward(weights, model, render=False):
 partial_func = partial(get_reward, model=model)
 mother_parameters = list(model.parameters())
 
-es = strategies.EvolutionModule(mother_parameters, partial_func, population_size=100, sigma=0.1, learning_rate=0.001, threadcount=10)
+es = EvolutionModule(
+    mother_parameters, partial_func, population_size=2, 
+    sigma=0.1, learning_rate=0.001, threadcount=8, cuda=cuda
+)
 final_weights = es.run(1000)
-pickle.dump(final_weights, open('weights.p', 'wb'))
+
+pickle.dump(final_weights, open(os.path.abspath(args.weights_path), 'wb'))
 
 reward = partial_func(final_weights, render=True)
 print(f"Reward from final weights: {reward}")
