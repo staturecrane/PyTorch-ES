@@ -57,6 +57,9 @@ class EvolutionModule:
             self.LEARNING_RATE *= self.decay
 
             if (iteration+1) % print_step == 0:
-                print('iter %d. reward: %f' % (iteration+1, self.reward_function(self.jitter_weights(copy.deepcopy(self.weights), no_jitter=True))))
+                print('iter %d. reward: %f' % (iteration+1, self.reward_function(
+                    self.jitter_weights(copy.deepcopy(self.weights), no_jitter=True), render=True)
+                    )
+                )
 
         return self.weights
