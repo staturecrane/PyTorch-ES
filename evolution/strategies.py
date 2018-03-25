@@ -10,7 +10,7 @@ import torch
 
 class EvolutionModule:
 
-    def __init__(self, weights, reward_func, population_size=50, sigma=0.1, learning_rate=0.001, decay=1.0):
+    def __init__(self, weights, reward_func, population_size=50, sigma=0.1, learning_rate=0.001, decay=1.0, threadcount=4):
         np.random.seed(0)
         self.weights = weights
         self.reward_function = reward_func
@@ -18,7 +18,7 @@ class EvolutionModule:
         self.SIGMA = sigma
         self.LEARNING_RATE = learning_rate
         self.decay = decay
-        self.pool = ThreadPool(8)
+        self.pool = ThreadPool(threadcount)
 
 
     def jitter_weights(self, weights, population=[], no_jitter=False):
