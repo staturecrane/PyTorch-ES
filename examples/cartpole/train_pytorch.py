@@ -29,7 +29,7 @@ model = nn.Sequential(
 pool = ThreadPool(100)
 
 def get_reward(weights, model, render=False):
-    # model.set_weights(weights)
+
     cloned_model = copy.deepcopy(model)
     for i, param in enumerate(cloned_model.parameters()):
         try:
