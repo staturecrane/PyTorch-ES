@@ -19,6 +19,8 @@ Following that, create a conda or virtualenv enviroment and run:
 pip install -r requirements.txt
 ```
 
+## Usage
+
 You will find the strategy classes (one as of now) within ```evolution/strategies```. These classes are designed to be used with PyTorch models and take two parameters: a function to get a reward and a list of PyTorch Variables that correspond to parameter layers. This can be achieved in the following manner:
 
 ```python
@@ -49,7 +51,10 @@ model = generate_pytorch_model()
 # using the partial tool
 partial_reward_func = partial(get_reward, model=model)
 
-es = EvolutionModule(reward_func, list(model.parameters(), population=10, learning_rate=0.001, sigma=0.1, threadcount=8)
+es = EvolutionModule(
+    list(model.parameters()), partial_reward_func, population=10, learning_rate=0.001, 
+    sigma=0.1, threadcount=8
+)
 final_weights = es.run(100)
 ```
 
