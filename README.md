@@ -30,7 +30,7 @@ from evolution.strategies import EvolutionModule
 
 def get_reward(model, weights):
     """
-    This function runs your model
+    This function runs your model and generates a reward
     """
     cloned_model = copy.deepcopy(model)
     for i, param in enumerate(cloned_model.parameters()):
@@ -44,12 +44,12 @@ def get_reward(model, weights):
 
 
 model = generate_pytorch_model()
-# EvolutionModule runs the population in a Pool, so 
+# EvolutionModule runs the population in a ThreadPool, so
 # if you need to inject other arguments, you can do that
 # using the partial tool
 partial_reward_func = partial(get_reward, model=model)
 
-es = EvolutionModule(reward_func, list(model.parameters(), population=10, learning_rate=0.001, sigma=0.1)
+es = EvolutionModule(reward_func, list(model.parameters(), population=10, learning_rate=0.001, sigma=0.1, threadcount=8)
 final_weights = es.run(100)
 ```
 
