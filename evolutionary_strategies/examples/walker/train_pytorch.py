@@ -9,6 +9,7 @@ import os
 import pickle
 import random
 import sys
+import time
 
 # from evostra import EvolutionStrategy
 from evolutionary_strategies.strategies.evolution import EvolutionModule
@@ -34,7 +35,7 @@ cuda = args.cuda and torch.cuda.is_available()
 # add the model on top of the convolutional base
 model = nn.Sequential(
     nn.Linear(24, 100),
-    nn.ReLU(True),
+    nn.Linear(100, 100),
     nn.Linear(100, 4),
     nn.Tanh()
 )
@@ -49,11 +50,11 @@ def get_reward(weights, model, render=False):
     cloned_model = copy.deepcopy(model)
     for i, param in enumerate(cloned_model.parameters()):
         try:
-            param.data = weights[i]
+            param.data.copy_(weights[i])
         except:
-            param.data = weights[i].data
+            param.data.copy_(weights[i].data)
 
-    env = gym.make("BipedalWalker-v2")
+    env = gym.make("BipedalWalkerHardcore-v2")
     ob = env.reset()
     done = False
     total_reward = 0
@@ -76,12 +77,16 @@ partial_func = partial(get_reward, model=model)
 mother_parameters = list(model.parameters())
 
 es = EvolutionModule(
-    mother_parameters, partial_func, population_size=2, 
-    sigma=0.1, learning_rate=0.001, threadcount=8, cuda=cuda
+    mother_parameters, partial_func, population_size=50, 
+    sigma=0.1, learning_rate=0.01, threadcount=8, cuda=cuda, decay=0.9999,
+    render_test=True
 )
+start = time.time()
 final_weights = es.run(1000)
+end = time.time() - start
 
 pickle.dump(final_weights, open(os.path.abspath(args.weights_path), 'wb'))
 
 reward = partial_func(final_weights, render=True)
 print(f"Reward from final weights: {reward}")
+print(f"Time to completion: {end}")

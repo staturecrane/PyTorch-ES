@@ -50,9 +50,9 @@ def get_reward(weights, model, render=False):
     cloned_model = copy.deepcopy(model)
     for i, param in enumerate(cloned_model.parameters()):
         try:
-            param.data = weights[i]
+            param.data.copy_(weights[i])
         except:
-            param.data = weights[i].data
+            param.data.copy_(weights[i].data)
 
     env = gym.make("CartPole-v0")
     ob = env.reset()
