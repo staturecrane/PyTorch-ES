@@ -34,9 +34,10 @@ args = parser.parse_args()
 
 cuda = args.cuda and torch.cuda.is_available()
 
-num_features = 16
+num_features = 4
 transform = transforms.Compose([
     transforms.Resize((128,128)),
+    transforms.Grayscale(),
     transforms.ToTensor()
 ])
 
@@ -45,7 +46,7 @@ class BreakoutModel(nn.Module):
         super(BreakoutModel, self).__init__()        
         self.main = nn.Sequential(
             # input size is in_size x 64 x 64
-            nn.Conv2d(3, num_features, 4, 2, 1, bias=False),
+            nn.Conv2d(1, num_features, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             # state size: ndf x 32 x 32
             nn.Conv2d(num_features, num_features * 2, 4, 2, 1, bias=False),
@@ -87,7 +88,7 @@ if cuda:
     model = model.cuda()
 
 
-def get_reward(weights, model, render=False):
+def get_reward(weights, model, render=False, save=False):
 
     cloned_model = copy.deepcopy(model)
     for i, param in enumerate(cloned_model.parameters()):
@@ -116,20 +117,3 @@ def get_reward(weights, model, render=False):
     env.close()
     return total_reward
 
-
-partial_func = partial(get_reward, model=model)
-mother_parameters = list(model.parameters())
-
-es = EvolutionModule(
-    mother_parameters, partial_func, population_size=50,
-    sigma=0.1, learning_rate=0.0001,
-    reward_goal=400, consecutive_goal_stopping=10,
-    threadcount=1, cuda=cuda, render_test=True
-)
-start = time.time()
-final_weights = es.run(500, print_step=1)
-end = time.time() - start
-
-pickle.dump(final_weights, open(os.path.abspath(args.weights_path), 'wb'))
-
-reward = partial_func(final_weights, render=True)

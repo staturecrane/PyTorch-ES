@@ -3,6 +3,7 @@ Evolutionary Strategies module for PyTorch models -- modified from https://githu
 """
 import copy
 from multiprocessing.pool import ThreadPool
+import time
 
 import numpy as np
 import torch
@@ -18,11 +19,14 @@ class EvolutionModule:
         sigma=0.1,
         learning_rate=0.001,
         decay=1.0,
+        sigma_decay=1.0,
         threadcount=4,
         render_test=False,
-        cuda=False
+        cuda=False,
+        reward_goal=None,
+        consecutive_goal_stopping=None
     ):
-        np.random.seed(0)
+        np.random.seed(int(time.time()))
         self.weights = weights
         self.reward_function = reward_func
         self.POPULATION_SIZE = population_size
@@ -30,8 +34,12 @@ class EvolutionModule:
         self.LEARNING_RATE = learning_rate
         self.cuda = cuda
         self.decay = decay
+        self.sigma_decay = sigma_decay
         self.pool = ThreadPool(threadcount)
         self.render_test = render_test
+        self.reward_goal = reward_goal
+        self.consecutive_goal_stopping = consecutive_goal_stopping
+        self.consecutive_goal_count = 0
 
 
     def jitter_weights(self, weights, population=[], no_jitter=False):
@@ -61,22 +69,30 @@ class EvolutionModule:
                 self.reward_function, 
                 [self.jitter_weights(copy.deepcopy(self.weights), population=pop) for pop in population]
             )
+            if np.std(rewards) != 0.0:
+                normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+                for index, param in enumerate(self.weights):
+                    A = np.array([p[index] for p in population])
+                    rewards_pop = torch.from_numpy(np.dot(A.T, normalized_rewards).T).float()
+                    if self.cuda:
+                        rewards_pop = rewards_pop.cuda()
+                    param.data = param.data + (self.LEARNING_RATE / (self.POPULATION_SIZE * self.SIGMA) * rewards_pop)
 
-            normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-
-            for index, param in enumerate(self.weights):
-                A = np.array([p[index] for p in population])
-                rewards_pop = torch.from_numpy(np.dot(A.T, normalized_rewards).T).float()
-                if self.cuda:
-                    rewards_pop = rewards_pop.cuda()
-                param.data = param.data + (self.LEARNING_RATE / (self.POPULATION_SIZE * self.SIGMA) * rewards_pop)
-
-            self.LEARNING_RATE *= self.decay
+                    self.LEARNING_RATE *= self.decay
+                    self.SIGMA *= self.sigma_decay
 
             if (iteration+1) % print_step == 0:
-                print('iter %d. reward: %f' % (iteration+1, self.reward_function(
-                    self.jitter_weights(copy.deepcopy(self.weights), no_jitter=True), render=self.render_test)
-                    )
+                test_reward = self.reward_function(
+                    self.jitter_weights(copy.deepcopy(self.weights), no_jitter=True), render=self.render_test
                 )
+                print('iter %d. reward: %f' % (iteration+1, test_reward))
+                if self.reward_goal and self.consecutive_goal_stopping:
+                    if test_reward >= self.reward_goal:
+                        self.consecutive_goal_count += 1
+                    else:
+                        self.consecutive_goal_count = 0
+
+                    if self.consecutive_goal_count >= self.consecutive_goal_stopping:
+                        return self.weights
 
         return self.weights

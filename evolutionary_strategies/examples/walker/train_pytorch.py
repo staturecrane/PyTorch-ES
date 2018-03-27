@@ -78,15 +78,16 @@ mother_parameters = list(model.parameters())
 
 es = EvolutionModule(
     mother_parameters, partial_func, population_size=50, 
-    sigma=0.1, learning_rate=0.01, threadcount=8, cuda=cuda, decay=0.9999,
-    render_test=True
+    sigma=0.1, learning_rate=0.001, reward_goal=300, consecutive_goal_stopping=20,
+    threadcount=8, cuda=cuda, render_test=True
 )
 start = time.time()
-final_weights = es.run(1000)
+final_weights = es.run(4000, print_step=1)
 end = time.time() - start
 
 pickle.dump(final_weights, open(os.path.abspath(args.weights_path), 'wb'))
 
 reward = partial_func(final_weights, render=True)
+
 print(f"Reward from final weights: {reward}")
 print(f"Time to completion: {end}")
