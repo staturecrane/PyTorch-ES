@@ -76,7 +76,7 @@ class EvolutionModule:
                     rewards_pop = torch.from_numpy(np.dot(A.T, normalized_rewards).T).float()
                     if self.cuda:
                         rewards_pop = rewards_pop.cuda()
-                    param.data = param.data + (self.LEARNING_RATE / (self.POPULATION_SIZE * self.SIGMA) * rewards_pop)
+                    param.data = param.data + self.LEARNING_RATE / (self.POPULATION_SIZE * self.SIGMA) * rewards_pop
 
                     self.LEARNING_RATE *= self.decay
                     self.SIGMA *= self.sigma_decay

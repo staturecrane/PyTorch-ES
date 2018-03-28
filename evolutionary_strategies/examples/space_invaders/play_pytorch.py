@@ -37,7 +37,6 @@ cuda = args.cuda and torch.cuda.is_available()
 num_features = 4
 transform = transforms.Compose([
     transforms.Resize((128,128)),
-    transforms.Grayscale(),
     transforms.ToTensor()
 ])
 
@@ -46,7 +45,7 @@ class BreakoutModel(nn.Module):
         super(BreakoutModel, self).__init__()        
         self.main = nn.Sequential(
             # input size is in_size x 64 x 64
-            nn.Conv2d(1, num_features, 4, 2, 1, bias=False),
+            nn.Conv2d(3, num_features, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             # state size: ndf x 32 x 32
             nn.Conv2d(num_features, num_features * 2, 4, 2, 1, bias=False),
@@ -105,6 +104,7 @@ def get_reward(weights, model, render=False, save=False):
     while not done:
         if render:
             env.render()
+            time.sleep(0.01)
         image = transform(Image.fromarray(ob))
         image = image.unsqueeze(0)
         if cuda:
@@ -117,3 +117,6 @@ def get_reward(weights, model, render=False, save=False):
     env.close()
     return total_reward
 
+weights = pickle.load(open(os.path.abspath(args.weights_path), 'rb'))
+
+get_reward(weights, model, render=True)

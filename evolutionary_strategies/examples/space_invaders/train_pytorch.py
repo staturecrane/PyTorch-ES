@@ -34,15 +34,15 @@ args = parser.parse_args()
 
 cuda = args.cuda and torch.cuda.is_available()
 
-num_features = 16
+num_features = 4
 transform = transforms.Compose([
     transforms.Resize((128,128)),
     transforms.ToTensor()
 ])
 
-class BreakoutModel(nn.Module):
+class InvadersModel(nn.Module):
     def __init__(self, num_features):
-        super(BreakoutModel, self).__init__()        
+        super(InvadersModel, self).__init__()        
         self.main = nn.Sequential(
             # input size is in_size x 64 x 64
             nn.Conv2d(3, num_features, 4, 2, 1, bias=False),
@@ -67,21 +67,13 @@ class BreakoutModel(nn.Module):
             nn.Softmax(1)
         )
 
-
-    def initialize_hidden(self, cuda):
-        if cuda:
-             return (Variable(torch.randn(1, 1, 50).cuda()),
-                    Variable(torch.randn(1, 1, 50).cuda()))
-        return (Variable(torch.randn(1, 1, 50)),
-                Variable(torch.randn((1, 1, 50))))
-
     
-    def forward(self, input): #, prev_hidden):
+    def forward(self, input):
         main = self.main(input)
         return main
 
 
-model = BreakoutModel(num_features)
+model = InvadersModel(num_features)
 
 if cuda:
     model = model.cuda()
@@ -100,10 +92,10 @@ def get_reward(weights, model, render=False):
     ob = env.reset()
     done = False
     total_reward = 0
-    # hidden = model.initialize_hidden(cuda)
     while not done:
         if render:
             env.render()
+            time.sleep(0.01)
         image = transform(Image.fromarray(ob))
         image = image.unsqueeze(0)
         if cuda:
@@ -121,13 +113,13 @@ partial_func = partial(get_reward, model=model)
 mother_parameters = list(model.parameters())
 
 es = EvolutionModule(
-    mother_parameters, partial_func, population_size=50,
-    sigma=0.1, learning_rate=0.0001,
-    reward_goal=400, consecutive_goal_stopping=10,
-    threadcount=1, cuda=cuda, render_test=True
+    mother_parameters, partial_func, population_size=25,
+    sigma=0.5, learning_rate=0.001, decay=0.999, sigma_decay=0.999,
+    reward_goal=200, consecutive_goal_stopping=20, threadcount=1,
+    cuda=cuda, render_test=True
 )
 start = time.time()
-final_weights = es.run(500, print_step=1)
+final_weights = es.run(10000, print_step=10)
 end = time.time() - start
 
 pickle.dump(final_weights, open(os.path.abspath(args.weights_path), 'wb'))

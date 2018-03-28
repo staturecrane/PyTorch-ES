@@ -53,8 +53,10 @@ partial_func = partial(get_reward, model=model)
 mother_parameters = list(model.parameters())
 
 es = EvolutionModule(
-    mother_parameters, partial_func, population_size=10,
-    sigma=0.1, learning_rate=0.001, threadcount=10, cuda=True
+    mother_parameters, partial_func, population_size=100,
+    sigma=0.1, learning_rate=0.001,
+    reward_goal=200, consecutive_goal_stopping=20,
+    threadcount=100, cuda=cuda, render_test=True
 )
 ```
 
