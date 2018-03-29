@@ -1,6 +1,8 @@
 # Evolutionary Strategies in PyTorch
 
-A set of tools based on [evostra](https://github.com/alirezamika/evostra) for using [OpenAI's evolutionary strategies](https://blog.openai.com/evolution-strategies/) in PyTorch. Keras implementations using evostra will be provided with some or all examples. 
+![](https://media.giphy.com/media/30pEMgYfiPliU87swt/giphy.gif)
+
+A set of tools based on [evostra](https://github.com/alirezamika/evostra) for using [OpenAI's evolutionary strategies](https://blog.openai.com/evolution-strategies/) in PyTorch. Keras implementations using evostra will be provided with some examples.
 
 TABLE OF CONTENTS
 =================
@@ -56,9 +58,28 @@ es = EvolutionModule(
     mother_parameters, partial_func, population_size=100,
     sigma=0.1, learning_rate=0.001,
     reward_goal=200, consecutive_goal_stopping=20,
-    threadcount=100, cuda=cuda, render_test=True
+    threadcount=10, cuda=cuda, render_test=True
 )
 ```
+  
+* EvolutionModule
+    - init
+        - parameters (list of PyTorch Variables)
+        - reward_function => float (runs episode and returns a reward)
+        - population_size=50
+        - sigma=0.1
+        - learning_rate=0.001
+        - decay=1.0
+        - sigma_decay=1.0
+        - threadcount=4
+        - render_test=False
+        - cuda=False
+        - reward_goal=None
+        - consecutive_goal_stopping=None (stops after n tests consecutively return rewards equal-to or greater-than goal)
+        - save_path=None (path to save weights at test times)
+    - run
+        - iterations
+        - print_step=10 (frequency with which to run test and save weights)
 
 ## Run
 
@@ -70,8 +91,15 @@ PYTHONPATH=. python evolutionary_strategies/examples/cartpole/train_pytorch.py -
 
 ## Examples
 
+### Lunar Lander
+
+Solved in 1200~ iterations: population=100, sigma=0.01, learning_rate=0.001.
+
+![](https://media.giphy.com/media/30pEMgYfiPliU87swt/giphy.gif)
+
 ### Cartpole
 
-Solved in 20~ seconds with 200 iterations. Population = 10, sigma = 0.1, learning_rate = 1e-3.
+Solved in 200 iterations: population=10, sigma=0.1, learning_rate=0.001.
 
 ![](https://media.giphy.com/media/5h9xfw3BXvztG4HVBi/giphy.gif)
+

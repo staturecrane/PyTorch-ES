@@ -14,7 +14,6 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler, TensorBoard,
 import numpy as np
 import tensorflow as tf
 
-env = gym.make("CartPole-v0")
 # add the model on top of the convolutional base
 inputs = Input(shape=(4,))
 x = Dense(100, activation='relu')(inputs)
@@ -23,6 +22,8 @@ prediction = Dense(2, activation='softmax')(x)
 model = Model(inputs=inputs, outputs=prediction)
 
 def get_reward(weights):
+    env = gym.make("CartPole-v0")
+
     model.set_weights(weights)
     ob = env.reset()
     done = False

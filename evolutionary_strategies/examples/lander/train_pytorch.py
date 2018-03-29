@@ -25,7 +25,7 @@ from torchvision import transforms
 gym_logger.setLevel(logging.CRITICAL)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-w', '--weights_path', type=str, required=True, help='Path to save final weights')
+parser.add_argument('-w', '--weights_path', type=str, help='Path to save final weights')
 parser.add_argument('-c', '--cuda', action='store_true', help='Whether or not to use CUDA')
 parser.set_defaults(cuda=False)
 
