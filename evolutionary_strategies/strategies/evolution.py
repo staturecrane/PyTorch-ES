@@ -72,7 +72,7 @@ class EvolutionModule:
                 self.reward_function, 
                 [self.jitter_weights(copy.deepcopy(self.weights), population=pop) for pop in population]
             )
-            if True:
+            if np.std(rewards) != 0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
                 for index, param in enumerate(self.weights):
                     A = np.array([p[index] for p in population])

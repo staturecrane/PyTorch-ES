@@ -95,13 +95,13 @@ def get_reward(weights, model, render=False):
     while not done:
         if render:
             env.render()
-            time.sleep(0.01)
+            time.sleep(0.005)
         image = transform(Image.fromarray(ob))
         image = image.unsqueeze(0)
         if cuda:
             image = image.cuda()
         prediction = cloned_model(Variable(image, volatile=True))
-        action = np.argmax(prediction.data)
+        action = prediction.data.cpu().numpy().argmax()
         ob, reward, done, _ = env.step(action)
 
         total_reward += reward 
@@ -113,11 +113,12 @@ partial_func = partial(get_reward, model=model)
 mother_parameters = list(model.parameters())
 
 es = EvolutionModule(
-    mother_parameters, partial_func, population_size=25,
-    sigma=0.5, learning_rate=0.001, decay=0.999, sigma_decay=0.999,
-    reward_goal=200, consecutive_goal_stopping=20, threadcount=1,
-    cuda=cuda, render_test=True
+    mother_parameters, partial_func, population_size=10,
+    sigma=0.01, learning_rate=0.001, decay=0.9999,
+    reward_goal=200, consecutive_goal_stopping=10, threadcount=1,
+    cuda=cuda, render_test=True, save_path=os.path.abspath(args.weights_path)
 )
+
 start = time.time()
 final_weights = es.run(10000, print_step=10)
 end = time.time() - start
