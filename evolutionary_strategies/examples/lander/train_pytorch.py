@@ -6,7 +6,6 @@ import gc
 import logging
 from multiprocessing.pool import ThreadPool
 import os
-import pickle
 import random
 import sys
 import time
@@ -35,12 +34,12 @@ args = parser.parse_args()
 cuda = args.cuda and torch.cuda.is_available()
 
 model = nn.Sequential(
-    nn.Linear(8, 40),
-    nn.ReLU(True),
-    nn.Linear(40, 50),
-    nn.ReLU(True),
-    nn.Linear(50, 4),
-    nn.Softmax(1)
+    nn.Linear(8, 100),
+    nn.ReLU(),
+    nn.Linear(100, 100),
+    nn.ReLU(),
+    nn.Linear(100, 4),
+    nn.Softmax()
 )
 
 if cuda:
@@ -68,7 +67,7 @@ def get_reward(weights, model, render=False):
         if cuda:
             batch = batch.cuda()
         prediction = cloned_model(Variable(batch))
-        action = np.argmax(prediction.data)
+        action = prediction.data.numpy().argmax()
         ob, reward, done, _ = env.step(action)
 
         total_reward += reward 
@@ -79,14 +78,13 @@ partial_func = partial(get_reward, model=model)
 mother_parameters = list(model.parameters())
 
 es = EvolutionModule(
-    mother_parameters, partial_func, population_size=50,
-    sigma=0.5, learning_rate=0.001, decay=0.9999,
-    reward_goal=200, consecutive_goal_stopping=10, threadcount=8, 
-    cuda=cuda, render_test=True
+    mother_parameters, partial_func, population_size=100,
+    sigma=0.01, learning_rate=0.001, decay=0.9999,
+    reward_goal=200, consecutive_goal_stopping=10, threadcount=15,
+    cuda=cuda, render_test=True, save_path=os.path.abspath(args.weights_path)
 )
 start = time.time()
-final_weights = es.run(10000, print_step=10)
+final_weights = es.run(4000, print_step=10)
 end = time.time() - start
 
-pickle.dump(final_weights, open(os.path.abspath(args.weights_path), 'wb'))
 reward = partial_func(final_weights, render=True)

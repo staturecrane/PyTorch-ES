@@ -3,6 +3,7 @@ Evolutionary Strategies module for PyTorch models -- modified from https://githu
 """
 import copy
 from multiprocessing.pool import ThreadPool
+import pickle
 import time
 
 import numpy as np
@@ -24,7 +25,8 @@ class EvolutionModule:
         render_test=False,
         cuda=False,
         reward_goal=None,
-        consecutive_goal_stopping=None
+        consecutive_goal_stopping=None,
+        save_path=None
     ):
         np.random.seed(int(time.time()))
         self.weights = weights
@@ -40,6 +42,7 @@ class EvolutionModule:
         self.reward_goal = reward_goal
         self.consecutive_goal_stopping = consecutive_goal_stopping
         self.consecutive_goal_count = 0
+        self.save_path = save_path
 
 
     def jitter_weights(self, weights, population=[], no_jitter=False):
@@ -69,7 +72,7 @@ class EvolutionModule:
                 self.reward_function, 
                 [self.jitter_weights(copy.deepcopy(self.weights), population=pop) for pop in population]
             )
-            if np.std(rewards) != 0.0:
+            if True:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
                 for index, param in enumerate(self.weights):
                     A = np.array([p[index] for p in population])
@@ -86,6 +89,10 @@ class EvolutionModule:
                     self.jitter_weights(copy.deepcopy(self.weights), no_jitter=True), render=self.render_test
                 )
                 print('iter %d. reward: %f' % (iteration+1, test_reward))
+
+                if self.save_path:
+                    pickle.dump(self.weights, open(self.save_path, 'wb'))
+                
                 if self.reward_goal and self.consecutive_goal_stopping:
                     if test_reward >= self.reward_goal:
                         self.consecutive_goal_count += 1
