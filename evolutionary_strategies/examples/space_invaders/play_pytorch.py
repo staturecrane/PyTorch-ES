@@ -100,11 +100,10 @@ def get_reward(weights, model, render=False, save=False):
     ob = env.reset()
     done = False
     total_reward = 0
-    # hidden = model.initialize_hidden(cuda)
     while not done:
         if render:
             env.render()
-            time.sleep(0.01)
+            time.sleep(0.005)
         image = transform(Image.fromarray(ob))
         image = image.unsqueeze(0)
         if cuda:

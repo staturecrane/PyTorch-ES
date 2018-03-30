@@ -40,7 +40,7 @@ model = nn.Sequential(
     nn.Linear(100, 100),
     nn.ReLU(),
     nn.Linear(100, 4),
-    nn.Softmax()
+    nn.Softmax(1)
 )
 
 if cuda:
