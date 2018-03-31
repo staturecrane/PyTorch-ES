@@ -15,10 +15,10 @@ TABLE OF CONTENTS
 
 Your system needs all the prerequisites for the minimal installation of OpenAI gym. These will differ by operating system, so please refer to the [gym repository](https://github.com/openai/gym) for detailed instructions for your build. You also need to install the PyTorch distribution of your [choice](http://pytorch.org/). You can trigger CUDA ops by passing in ```-c``` or ```--cuda``` to the training examples.
 
-Following that, create a conda or virtualenv enviroment and run:
+Following that:
 
 ```shell
-pip install -r requirements.txt
+pip install pytorch_es
 ```
 
 ## Usage
@@ -29,7 +29,7 @@ You will find the strategy classes (one as of now) within ```evolutionary_strate
 import copy
 from functools import partial
 
-from evolution.strategies import EvolutionModule
+from pytorch_es import EvolutionModule
 
 
 def get_reward(model, weights):
@@ -86,7 +86,7 @@ es = EvolutionModule(
 You can run the examples in the following manner:
 
 ```shell
-PYTHONPATH=. python evolutionary_strategies/examples/cartpole/train_pytorch.py --weights_path cartpole_weights.p
+python examples/cartpole/train_pytorch.py --weights_path cartpole_weights.p
 ```
 
 ## Examples

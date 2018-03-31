@@ -5,3 +5,6 @@
 .cache/
 *.zip
 *.p
+build/
+dist/
+pytorch_es.egg-info
