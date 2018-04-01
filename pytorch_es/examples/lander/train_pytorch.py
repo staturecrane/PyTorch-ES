@@ -11,8 +11,8 @@ import sys
 import time
 
 # from evostra import EvolutionStrategy
-from evolutionary_strategies.strategies.evolution import EvolutionModule
-from evolutionary_strategies.utils.helpers import weights_init
+from pytorch_es import EvolutionModule
+from pytorch_es.utils.helpers import weights_init
 import gym
 from gym import logger as gym_logger
 import numpy as np
