@@ -1,6 +1,12 @@
 import os
 import re
-from pip.req import parse_requirements
+
+# Workaround for pip >= 10
+try:
+    from pip._internal.req import parse_requirements
+except ImportError:
+    from pip.req import parse_requirements
+
 from setuptools import setup, find_packages
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
